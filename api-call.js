@@ -1,6 +1,11 @@
 const axios = require('axios')
 
 module.exports = function (RED) {
+  /**
+   * Setup of the API Call node
+   *
+   * @param {*} config
+   */
   function ApiCall(config) {
     RED.nodes.createNode(this, config)
     var node = this
