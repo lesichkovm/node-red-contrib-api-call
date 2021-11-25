@@ -6,13 +6,15 @@
     defaults: {
       name: { value: '' },
       apiurl: { value: '', required: true },
-      apikey: { value: '', required: true },
+      apiauthorization: { value: '', required: true },
+      apikey: { value: '', required: false },
+      apitoken: { value: '', required: false },
       apimethod: { value: 'post', required: true },
-      field: {
+      property: {
         value: 'payload',
         validate: RED.validators.typedInput('fieldType'),
       },
-      fieldType: { value: 'msg' },
+      propertyType: { value: 'msg' },
     },
     inputs: 1,
     outputs: 1,
@@ -25,21 +27,50 @@
      */
     oneditprepare: function () {
       // 1. set default field
-      if (!this.field) {
-        this.field = 'payload'
+      if (!this.property) {
+        this.property = 'payload'
         $('#node-input-field').val('payload')
       }
 
       // 2. set default field type
-      if (!this.fieldType) {
-        this.fieldType = 'msg'
+      if (!this.propertyType) {
+        this.propertyType = 'msg'
       }
 
       // 3. set field type list
-      $('#node-input-field').typedInput({
+      $('#node-input-property').typedInput({
         default: 'msg',
         types: ['msg', 'flow', 'global'],
-        typeField: $('#node-input-fieldType'),
+        typeField: $('#node-input-propertyType'),
+      })
+
+      // 4. Set authorizations
+      $('#node-input-apiauthorization').typedInput({
+        types: [
+          {
+            value: '',
+            options: [
+              { value: '', label: 'No Authorization' },
+              { value: 'api_key', label: 'API Key' },
+              { value: 'bearer_token', label: 'Bearer Token' },
+            ],
+          },
+        ],
+      })
+
+      $('#node-input-apiauthorization').change(function () {
+        // Hide All
+        $('#node-input-apikey-row').hide()
+        $('#node-input-apitoken-row').hide()
+
+        // Show API Key
+        if ($('#node-input-apiauthorization').val() == 'api_key') {
+          $('#node-input-apikey-row').show()
+        }
+
+        if ($('#node-input-apiauthorization').val() == 'bearer_token') {
+          $('#node-input-apitoken-row').show()
+        }
       })
     },
     /**
@@ -76,28 +107,36 @@
   </div>
   <!-- END: API URL -->
 
-  <!-- START: API Key -->
+  <!-- START: API Authorization -->
   <div class="form-row">
-      <label for="node-input-name"><i class="icon-tag"></i> API Key</label>
+    <label for="node-input-name">
+      <i class="icon-tag"></i>
+      Authorization
+    </label>
+    <input type="text" id="node-input-apiauthorization">
+  </div>
+  <!-- END: API Authorization -->
+
+
+  <!-- START: API Key -->
+  <div class="form-row" id="node-input-apikey-row">
+      <label for="node-input-apikey">
+        <i class="icon-tag"></i>
+        API Key
+      </label>
       <input type="text" id="node-input-apikey" placeholder="API Key">
   </div>
   <!-- START: API Key -->
 
-  <!-- <div class="form-row">
-    <label for="node-input-field"><i class="fa fa-ellipsis-h"></i> <span data-i18n="template.label.property"></span></label>
-    <input type="text" id="node-input-field" placeholder="payload" style="width:250px;">
-    <input type="hidden" id="node-input-fieldType">
-  </div> -->
-  <div class="form-row">
-    <label for="node-input-field">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-three-dots" viewBox="0 0 16 16">
-            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
-        </svg>
-        Property
-    </label>
-    <input type="text" id="node-input-field" placeholder="payload" style="width:250px;">
-    <input type="hidden" id="node-input-fieldType">
+  <!-- START: API Token -->
+  <div class="form-row" id="node-input-apitoken-row">
+      <label for="node-input-apitoken">
+        <i class="icon-tag"></i>
+        Token
+      </label>
+      <input type="text" id="node-input-apitoken" placeholder="Token">
   </div>
+  <!-- END: API Token -->
 
   <!-- START: API Method -->
   <div class="form-row">
@@ -107,16 +146,27 @@
       </label>
       <select id="node-input-apimethod">
           <option value=""> - select method - </option>
-          <option value="post">POST</option>
-          <option value="get">GET</option>
           <option value="delete">DELETE</option>
-          <option value="put">PUT</option>
+          <option value="get">GET</option>
           <option value="put">HEAD</option>
+          <option value="post">POST</option>
+          <option value="put">PUT</option>
       </select>
   </div>
   <!-- END: API Method -->
+
+  <!-- START: Property -->
+  <div class="form-row">
+    <label for="node-input-property">
+      <i class="fa fa-ellipsis-h"></i>
+      Property
+    </label>
+    <input type="text" id="node-input-property" placeholder="payload" style="width:250px;">
+    <input type="hidden" id="node-input-propertyType">
+  </div>
+  <!-- END: Property -->
 </script>
-<!-- END; Template -->
+<!-- END: Template -->
 
 <!-- START: Help -->
 <script type="text/x-red" data-help-name="api call">

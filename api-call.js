@@ -5,11 +5,15 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config)
     var node = this
 
-    this.field = config.field || 'response'
-    this.fieldType = config.fieldType || 'msg'
+    node.property = config.property || 'response'
+    node.propertyType = config.propertyType || 'msg'
     node.apiurl = config.apiurl
     node.apikey = config.apikey
+    node.apitoken = config.apitoken
     node.apimethod = config.apimethod
+    node.apiauthorization = config.apiauthorization
+
+    node.debug = false // development flag only
 
     // ======================================================================= //
     // ==  START: On Close                                                  == //
@@ -26,32 +30,96 @@ module.exports = function (RED) {
     // ======================================================================= //
     node.on('input', (msg, send, done) => {
       //try {
-      var data = {
-        //api_key: node.apikey,
-        //...msg.payload,
-        api_key: '123',
+      let data = {
+        ...msg.payload,
       }
-      msg.apikey = node.apikey
-      msg.apiurl = node.apiurl
-      msg.apimethod = node.apimethod
+      let headers = {
+        ...msg.headers,
+      }
 
-      node.warn(data)
+      if (node.apiauthorization == 'api_key') {
+        data.api_key = node.apikey
+      }
+
+      if (node.apiauthorization == 'bearer_token') {
+        headers.Authorization = 'Bearer ' + node.apitoken
+      }
+
+      if (node.debug) {
+        msg.apikey = node.apikey
+        msg.apiurl = node.apiurl
+        msg.apimethod = node.apimethod
+        msg.apiauthorization = node.apiauthorization
+
+        node.warn('Axios URL')
+        node.warn(node.apiurl)
+        node.warn('Axios Authorization')
+        node.warn(node.apiauthorization)
+        node.warn('Axios Method')
+        node.warn(node.apimethod)
+      }
 
       // START: Post the request to the API
-      axios({
+      let axiosConfig = {
         method: node.apimethod,
         responseType: 'json',
         url: node.apiurl,
-        headers: {
-          Authorization: 'Bearer ' + node.apikey,
-        },
-        data: data,
-      })
+        headers: headers,
+      }
+
+      if (
+        node.apimethod === 'delete' ||
+        node.apimethod === 'head' ||
+        node.apimethod === 'post' ||
+        node.apimethod === 'put'
+      ) {
+        axiosConfig.data = data
+        node.warn('Axios Data')
+        node.warn(data)
+      }
+
+      if (node.apimethod === 'get') {
+        axiosConfig.params = data
+        node.warn('Axios Params')
+        node.warn(data)
+      }
+
+      axios(axiosConfig)
         .then(function (response) {
           node.status({ fill: 'green', shape: 'dot', text: 'call ok' })
-          msg.response = response
-          msg.payload = response.data
-          node.send(msg)
+
+          if (node.debug) {
+            msg.response = response
+          }
+
+          // START: Set response to the set property
+          if (node.propertyType === 'msg') {
+            RED.util.setMessageProperty(msg, node.property, response.data)
+            send(msg)
+            done()
+          } else if (
+            node.propertyType === 'flow' ||
+            node.propertyType === 'global'
+          ) {
+            var context = RED.util.parseContextStore(node.property)
+            var target = node.context()[node.propertyType]
+            target.set(context.key, response.data, context.store, function (
+              err,
+            ) {
+              if (err) {
+                done(err)
+              } else {
+                send(msg)
+                done()
+              }
+            })
+          } else {
+            // should never reach here
+            msg.payload = response.data
+            send(msg)
+            done()
+          }
+          // END: Set response to the set property
         })
         .catch(function (error) {
           node.error('http : connection error', msg)
@@ -64,37 +132,6 @@ module.exports = function (RED) {
           node.send(msg)
         })
       // END: Post the request to the API
-
-      //node.status({ fill: 'green', shape: 'dot', text: 'query built ok' })
-      // } catch (error) {
-      //   node.error('api : error' + JSON.stringify(error))
-      //   node.status({ fill: 'red', shape: 'dot', text: 'api call failed' })
-      //   msg.payload = error
-      // }
-
-      // Set msg to the set property
-      // if (node.fieldType === 'msg') {
-      //   var apiResponse = {}
-      //   RED.util.setMessageProperty(msg, node.field, apiResponse)
-      //   send(msg)
-      //   done()
-      // } else if (node.fieldType === 'flow' || node.fieldType === 'global') {
-      //   var context = RED.util.parseContextStore(node.field)
-      //   var target = node.context()[node.fieldType]
-      //   target.set(context.key, sql, context.store, function (err) {
-      //     if (err) {
-      //       done(err)
-      //     } else {
-      //       send(msg)
-      //       done()
-      //     }
-      //   })
-      // } else {
-      //   // should never reach here
-      //   msg.payload = {}
-      //   send(msg)
-      //   done()
-      // }
     })
     // ======================================================================= //
     // ==   END: On Input                                                   == //
