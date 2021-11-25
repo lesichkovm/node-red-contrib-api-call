@@ -1,7 +1,7 @@
 {
     "name": "node-red-contrib-api-call",
-    "version": "0.0.1",
-    "description": "An node for Node-Red to call an API",
+    "version": "0.0.2",
+    "description": "A node for Node-Red to call an API",
     "repository": {
         "type": "git",
         "url": "git@github.com:lesichkovm/node-red-contrib-api-call.git"

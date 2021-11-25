@@ -5,7 +5,7 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config)
     var node = this
 
-    node.property = config.property || 'response'
+    node.property = config.property || 'payload'
     node.propertyType = config.propertyType || 'msg'
     node.apiurl = config.apiurl
     node.apikey = config.apikey
