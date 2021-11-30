@@ -5,11 +5,31 @@
     color: '#aabbcc',
     defaults: {
       name: { value: '' },
-      apiurl: { value: '', required: true },
+      apiurl: {
+        value: '',
+        required: true,
+        validate: RED.validators.typedInput('apiurlType'),
+      },
+      apiurlType: { value: '', required: true },
+
       apiauthorization: { value: '', required: true },
-      apikey: { value: '', required: false },
-      apitoken: { value: '', required: false },
+
+      apikey: {
+        value: '',
+        required: false,
+        validate: RED.validators.typedInput('apikeyType'),
+      },
+      apikeyType: { value: '', required: true },
+
+      apitoken: {
+        value: '',
+        required: false,
+        validate: RED.validators.typedInput('apitokenType'),
+      },
+      apitokenType: { value: '', required: true },
+
       apimethod: { value: 'post', required: true },
+
       property: {
         value: 'payload',
         validate: RED.validators.typedInput('propertyType'),
@@ -26,18 +46,54 @@
      * On edit prepare
      */
     oneditprepare: function () {
-      // 1. set default field
+      // 1. apiurl - set field type list
+      $('#node-input-apiurl').typedInput({
+        default: 'str',
+        types: ['str', 'msg', 'flow', 'global'],
+        typeField: $('#node-input-apiurlType'),
+      })
+
+      // 2. apiurl - set default field type
+      if (!this.apiurlType) {
+        this.apiurlType = 'str'
+      }
+
+      // 1. apikey - set field type list
+      $('#node-input-apikey').typedInput({
+        default: 'str',
+        types: ['str', 'msg', 'flow', 'global'],
+        typeField: $('#node-input-apikeyType'),
+      })
+
+      // 2. apikey - set default field type
+      if (!this.apikeyType) {
+        this.apikeyType = 'str'
+      }
+
+      // 1. apitoken - set field type list
+      $('#node-input-apitoken').typedInput({
+        default: 'str',
+        types: ['str', 'msg', 'flow', 'global'],
+        typeField: $('#node-input-apitokenType'),
+      })
+
+      // 2. apikey - set default field type
+      if (!this.apitokenType) {
+        this.apitokenType = 'str'
+      }
+
+      // 1. property - set default
       if (!this.property) {
         this.property = 'payload'
         $('#node-input-field').val('payload')
       }
 
-      // 2. set default field type
+      // 2. property set default field type
       if (!this.propertyType) {
         this.propertyType = 'msg'
       }
 
-      // 3. set field type list
+      // 3. property - set field type list
       $('#node-input-property').typedInput({
         default: 'msg',
         types: ['msg', 'flow', 'global'],
@@ -99,11 +155,12 @@
 
   <!-- START: API URL -->
   <div class="form-row">
-    <label for="node-input-name">
+    <label for="node-input-apiurl">
       <i class="fa fa-link"></i>
       API URL
     </label>
-    <input type="text" id="node-input-apiurl" placeholder="API URL">
+    <input type="text" id="node-input-apiurl" placeholder="https://" style="width:250px;">
+    <input type="hidden" id="node-input-apiurlType">
   </div>
   <!-- END: API URL -->
 
@@ -125,6 +182,7 @@
         API Key
       </label>
       <input type="text" id="node-input-apikey" placeholder="API Key">
+      <input type="hidden" id="node-input-apikeyType">
   </div>
   <!-- START: API Key -->
 
@@ -135,6 +193,7 @@
         Token
       </label>
       <input type="text" id="node-input-apitoken" placeholder="Token">
+      <input type="hidden" id="node-input-apitokenType">
   </div>
   <!-- END: API Token -->
 

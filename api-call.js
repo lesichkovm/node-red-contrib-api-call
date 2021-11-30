@@ -1,6 +1,24 @@
 const axios = require('axios')
 
 module.exports = function (RED) {
+  function getTypedPropertyFinalValue(nodeType, nodeValue, msg, node) {
+    if (nodeType === 'str') {
+      return nodeValue
+    }
+
+    if (nodeType === 'msg') {
+      return RED.util.getMessageProperty(msg, nodeValue)
+    }
+
+    if (nodeType === 'flow' || nodeType === 'global') {
+      var context = RED.util.parseContextStore(nodeValue)
+      var target = node.context()[nodeType]
+      return target.get(context.key)
+    }
+
+    return 'undefined'
+  }
+
   /**
    * Setup of the API Call node
    *
@@ -13,8 +31,11 @@ module.exports = function (RED) {
     node.property = config.property || 'payload'
     node.propertyType = config.propertyType || 'msg'
     node.apiurl = config.apiurl
+    node.apiurlType = config.apiurlType
     node.apikey = config.apikey
+    node.apikeyType = config.apikeyType
     node.apitoken = config.apitoken
+    node.apitokenType = config.apitokenType
     node.apimethod = config.apimethod
     node.apiauthorization = config.apiauthorization
 
@@ -42,22 +63,47 @@ module.exports = function (RED) {
         ...msg.headers,
       }
 
+      const finalApiUrl = getTypedPropertyFinalValue(
+        node.apiurlType,
+        node.apiurl,
+        msg,
+        node,
+      )
+
+      const finalApiKey = getTypedPropertyFinalValue(
+        node.apikeyType,
+        node.apikey,
+        msg,
+        node,
+      )
+
+      const finalApiToken = getTypedPropertyFinalValue(
+        node.apitokenType,
+        node.apitoken,
+        msg,
+        node,
+      )
+
       if (node.apiauthorization == 'api_key') {
-        data.api_key = node.apikey
+        data.api_key = finalApiKey
       }
 
       if (node.apiauthorization == 'bearer_token') {
-        headers.Authorization = 'Bearer ' + node.apitoken
+        headers.Authorization = 'Bearer ' + finalApiToken
       }
 
       if (node.debug) {
         msg.apikey = node.apikey
         msg.apiurl = node.apiurl
+        msg.apiurlType = node.apiurlType
+        msg.apiurlFinal = finalApiUrl
+        msg.apikeyFinal = finalApiKey
+        msg.apitokenFinal = finalApiToken
         msg.apimethod = node.apimethod
         msg.apiauthorization = node.apiauthorization
 
         node.warn('Axios URL')
-        node.warn(node.apiurl)
+        node.warn(node.apiurlType + ':' + node.apiurl)
         node.warn('Axios Authorization')
         node.warn(node.apiauthorization)
         node.warn('Axios Method')
@@ -68,7 +114,7 @@ module.exports = function (RED) {
       let axiosConfig = {
         method: node.apimethod,
         responseType: 'json',
-        url: node.apiurl,
+        url: finalApiUrl,
         headers: headers,
       }
 
