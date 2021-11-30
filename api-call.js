@@ -39,7 +39,7 @@ module.exports = function (RED) {
     node.apimethod = config.apimethod
     node.apiauthorization = config.apiauthorization
 
-    node.debug = false // development flag only
+    node.debug = false // development flag only, to be removed at v1.0.0
 
     // ======================================================================= //
     // ==  START: On Close                                                  == //
@@ -55,7 +55,6 @@ module.exports = function (RED) {
     // ==  START: On Input                                                  == //
     // ======================================================================= //
     node.on('input', (msg, send, done) => {
-      //try {
       let data = {
         ...msg.payload,
       }
@@ -124,15 +123,26 @@ module.exports = function (RED) {
         node.apimethod === 'post' ||
         node.apimethod === 'put'
       ) {
-        axiosConfig.data = data
-        node.warn('Axios Data')
-        node.warn(data)
+        var params = new URLSearchParams()
+        for (key in data) params.append(key, data[key])
+        axiosConfig.data = params
+        if (node.debug) {
+          node.warn('Axios Data')
+          node.warn(params)
+        }
       }
 
       if (node.apimethod === 'get') {
         axiosConfig.params = data
-        node.warn('Axios Params')
-        node.warn(data)
+        if (node.debug) {
+          node.warn('Axios Params')
+          node.warn(data)
+        }
+      }
+
+      if (node.debug) {
+        node.warn('Axios Config')
+        node.warn(axiosConfig)
       }
 
       axios(axiosConfig)
