@@ -1,15 +1,18 @@
 {
     "name": "node-red-contrib-api-call",
-    "version": "0.2.0",
-    "description": "A node for Node-Red to call an API",
+    "version": "0.3.0",
+    "description": "A node for Node-Red to make API calls with flexible configuration",
     "repository": {
         "type": "git",
-        "url": "git@github.com:lesichkovm/node-red-contrib-api-call.git"
+        "url": "https://github.com/lesichkovm/node-red-contrib-api-call.git"
     },
     "keywords": [
         "api",
         "call",
-        "node-red"
+        "http",
+        "node-red",
+        "rest",
+        "axios"
     ],
     "main": "api-call.js",
     "scripts": {
@@ -17,7 +20,11 @@
     },
     "author": "",
     "license": "MIT",
+    "engines": {
+        "node": ">=12.0.0"
+    },
     "node-red": {
+        "version": ">=1.0.0",
         "nodes": {
             "api": "api-call.js"
         }
